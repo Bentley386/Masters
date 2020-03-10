@@ -10,12 +10,12 @@ import numpy as np
 import re
 from scipy.optimize import curve_fit
 
-files = [i for i in os.listdir("./EksitacijeSproti")]
+files = [i for i in os.listdir("../EksitacijeSproti")]
 
 def getEnergies(T):
     allenergies=[]
     pattern = re.compile(r"\[[^[]*\]")
-    folderpath = "./ExcByEnergy/energije/{}".format(T)
+    folderpath = "../ExcByEnergy/energije/{}".format(T)
     folder = [i for i in os.listdir(folderpath)]
     
     for textfile in folder:
@@ -30,7 +30,7 @@ def getEnergies(T):
 def getExcitations(T):
     allexcitations=[]
     pattern = re.compile(r"\[[^[]*\]")
-    folderpath = "./ExcByEnergy/eksitacije/{}".format(T)
+    folderpath = "../ExcByEnergy/eksitacije/{}".format(T)
     folder = [i for i in os.listdir(folderpath)]
     
     for textfile in folder:
@@ -79,13 +79,17 @@ def exponentForFinal(times,divide=1,fit=False):
         for j in allExcitations:
             averaged[i]+=np.sum(j[-1])
     averaged /= len(allExcitations)
-    #plt.plot(np.array(times)/divide,averaged)
+    plt.plot(np.array(times)/divide,averaged)
     plt.xscale("log")
     plt.yscale("log")
     if fit:
         params=curve_fit(model,np.array(times)/divide,averaged,(1,0,2))[0]
         params2=linRegress(times,averaged)
         casi = np.linspace(times[0],times[-1],1000)
+        print(params[1])
+        print(params[2])
+        print(params2[1])
+        print(params2[2])
         plt.plot(casi,[model(x,params[0],params[1],params[2]) for x in casi])
         plt.plot(casi,[np.exp(params2[0])/x**params2[1]/np.log(x)**params2[2] for x in casi],"--")
         
@@ -135,13 +139,13 @@ def EexcMax(times):
         allEnergies = getEnergies(time)
         for i in range(len(allEnergies)):
             for j in range(500):
-                energy = allEnergies[i][-1][j]
+                energy = allEnergies[i][10][j]
                 if energy >= 1:
                     continue
                 where = 0
                 while where<partition:
                     if energy < energyRange[where]:
-                        excitations[where] += allExcitations[i][-1][j]
+                        excitations[where] += allExcitations[i][10][j]
                         number[where] += 1
                         break
                     where += 1
@@ -156,7 +160,7 @@ def EexcMax(times):
     plt.yscale("log")
     plt.xscale("log")
     
-#EexcMax([200,600,2000,6000,20000])
+#EexcMax([200,600,2000,6000,20000,60000,200000])
 #EexcMax([400,900,4000,9000,40000])
        
 
@@ -164,14 +168,14 @@ def EexcMax(times):
 #excitationsDuringQuench([3+0.1*i for i in range(1,21)],[20,200,2000,20000,60,600,6000])
 #excitationsDuringQuench([2+0.1*i for i in range(1,41)],[40,400,4000,40000,90,900,9000])
  
-#excitationsDuringQuench([3+0.1*i for i in range(1,21)],[20000])
+#excitationsDuringQuench([3+0.1*i for i in range(1,21)],[0])
 #excitationsDuringQuench([2+0.1*i for i in range(1,41)],[40000])    
     
 #excitationsDuringQuench([2+0.1*i for i in range(1,41)],[400,4000,40000,900,9000])
 
     
 #exponentForFinal([10,30,100,300,1000,3000,10000])
-#exponentForFinal([600,2000,6000,20000],fit=True)
+#exponentForFinal([600,2000,6000,20000,60000,200000],fit=True)
 #exponentForFinal([400,900,4000,9000,40000],fit=True)
             
         
@@ -185,6 +189,37 @@ def EexcMax(times):
 #plt.legend()
 
      
+    
+def singleState(stanje):
+    N=1000
+    path = "../poStanjih/"
+    pattern = re.compile(r"\[[^[]*\]")
+    with open(path + "energije/8166247.txt","r") as f:
+        energies = re.findall(pattern,f.read())
+    with open(path + "eksitacije/{}/8166247.txt".format(str(stanje)),"r") as f:
+        transitions = re.findall(pattern,f.read())
+    
+    energies = [list(map(float,e[1:-1].split()))[int(N/2):] for e in energies]
+    transitions = [list(map(float,e[1:-1].split(",")))[int(N/2):] for e in transitions]
+    transitions = np.array(transitions)
+    #print([i for i in transitions[15] if i>0.01])
+    z = transitions.flatten()
+    y = np.array(energies).flatten()
+    Wji = [3+0.1*i for i in range(1,21)]
+    x = np.repeat(Wji,int(N/2))
+    cmap = plt.get_cmap("viridis")
+    maks=np.amax(z)
+    for i in range(len(x)):
+        plt.plot(x[i],y[i],"ok",alpha=z[i]/maks)
+#    cnt = plt.tricontourf(x,y,z,levels=np.linspace(np.amin(z),np.amax(z),50))
+#    for c in cnt.collections: #remove ugly  white lines
+#        c.set_edgecolor("face")
+#    plt.colorbar(cnt)    
+    plt.yscale("log")
+
+        
+singleState(1)
+    
         
         
         
