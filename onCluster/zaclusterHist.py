@@ -1,4 +1,6 @@
-
+"""
+To run on cluster. Excitation Histogram.
+"""
 import numpy as np
 import scipy.linalg as lin
 import sys

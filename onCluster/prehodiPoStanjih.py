@@ -1,5 +1,5 @@
 """
-To run on the cluster. Excitations during quench.
+To run on cluster. Transitions by state during quench.
 """
 import numpy as np
 import scipy.linalg as lin
@@ -63,45 +63,64 @@ def matrikaZaCasovniRazvoj(N,tau,vji,wji):
 
 if 0:
     with open("seedi.txt","w") as f:
-            seedi = "\n".join(list(map(str,list(map(int,np.random.rand(100)*10**8)))))
+            seedi = "\n".join(list(map(str,list(map(int,np.random.rand(100)*10**12)))))
             f.write(seedi)
 
-if 0:
+def excToState(final,psis):
+	prob=0
+	numStates = len(psis[0])
+	for state in range(numStates):
+		prob+= np.abs(np.vdot(final,psis[:,state]))**2
+	return prob
+
+def excToAllStates(interested,others):
+    occupation = []
+    for i in range(1000):
+        occupation.append(np.abs(np.vdot(interested,others[:,i]))**2)
+    return occupation
+if 1:
     #casovni razvoj
     seed = int(sys.argv[1])
+    #seed = 8166247
     np.random.seed(seed)
     N=1000
     omega1 = np.random.rand(N)-0.5
     omega2 = np.random.rand(N)-0.5
     tau=1
-    Winitial = 3.5  #fazni prehod okoli 3.9
-    Wfinal = 4.5   # W(t) = Winitial + (Wfinal-Winitial)/T * t        
-    rez = []
-    for T in np.linspace(10,1000,50):
-        print(T)
-        koraki = int(T/tau)+1
-        mji = np.zeros(koraki)
-        Wji = np.linspace(Winitial,Wfinal,koraki)
-        vji = np.ones(N)*mji[0] + Wji[0]*omega2
-        wji = np.ones(N)+0.5*Wji[0]*omega1
-        psiji = skonstruirajHPBC(N,vji,wji,np.zeros(N))[1][:,:int(N/2)]
-        
-        for i in range(1,koraki):
-            vji = np.ones(N)*mji[i] + Wji[i]*omega2
-            wji = np.ones(N)+0.5*Wji[i]*omega1
-            b = np.matmul(matrikaZaCasovniRazvoj(N,0.5*tau,vji,wji).todense(),psiji)
-            psiji = lins.spsolve(matrikaZaCasovniRazvoj(N,-0.5*tau,vji,wji).tocsc(),b)
+    T=6000
+    results = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[]}
+    energies = []
     
-        if T==10:
-            koncne = skonstruirajHPBC(N,vji,wji,np.zeros(N))[1][:,int(N/2):]
-            P0 = np.zeros((N,N),dtype=np.complex128) 
-            for i in range(int(N/2)):
-                P0 = P0 + np.tensordot(np.conjugate(koncne[:,i]),koncne[:,i],0)
-        P = np.zeros((N,N),dtype=np.complex128)
-        for j in range(int(N/2)):
-            P = P + np.tensordot(np.conjugate(psiji[:,j]),psiji[:,j],0)
+    interestedWs=list(np.arange(3*10+1,5*10+1)/10)
+    koraki = int(T/tau)+1
+    mji = np.zeros(koraki)
+    Wji = np.linspace(3,5,koraki)
+    vji = np.ones(N)*mji[0] + Wji[0]*omega2
+    wji = np.ones(N)+0.5*Wji[0]*omega1
+#    energije=skonstruirajHPBC(N,vji,wji,np.zeros(N))[0][:int(N/2)]
+#    for T in results:
+#        print(energije[-T])
+#    č
+    psiji = skonstruirajHPBC(N,vji,wji,np.zeros(N))[1][:,:int(N/2)]
+        
+    for i in range(1,koraki):
+        vji = np.ones(N)*mji[i] + Wji[i]*omega2
+        wji = np.ones(N)+0.5*Wji[i]*omega1
+        b = np.matmul(matrikaZaCasovniRazvoj(N,0.5*tau,vji,wji).todense(),psiji)
+        psiji = lins.spsolve(matrikaZaCasovniRazvoj(N,-0.5*tau,vji,wji).tocsc(),b)
             
-        rez.append(np.trace(np.matmul(P,P0)))
+        if np.argmin(np.abs(Wji-interestedWs[0])) == i:
+            interestedWs.pop(0)
+            koncne = skonstruirajHPBC(N,vji,wji,np.zeros(N))
+            koncneFunkcije = koncne[1]
+            koncneEnergije = koncne[0]
+            energies.append(koncneEnergije)
+            for T in results:
+                results[T].append(excToAllStates(psiji[:,-T],koncneFunkcije))
 
-    with open("rezultati.txt","w") as f:
-        f.write(" ".join(list(map(str,rez))))
+                
+with open("poStanjih/energije/{}.txt".format(seed),"w") as f:
+    f.write(" ".join(list(map(str,energies))))
+for T in results:
+    with open("poStanjih/eksitacije/{}/{}.txt".format(T,seed),"w") as f:
+        f.write(" ".join(list(map(str,results[T]))))

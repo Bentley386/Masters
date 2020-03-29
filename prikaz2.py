@@ -1,3 +1,6 @@
+"""
+Display both energy bands and excitations
+"""
 import matplotlib.pyplot as plt
 import os
 import numpy as np
@@ -25,24 +28,24 @@ every = np.zeros((200,99*500))
 j=0
 
 def energyPlots():
-    for file in ["436409.txt"]: 
-        f = open("./energijeDoMaloVecW/" + file).read()
+    for file in ["8166247.txt"]: 
+        f = open("../rezultatiN1000Energije/" + file).read()
         data = re.findall(pattern1,f)
         for j in range(int(N/2)):
             energies = []
             for i in range(len(data)):
-                #energies.append(float(data[i][1:-1].split()[int(N/2)+j]))
-                energies.append(float(data[i][1:-1].split()[int(N/2)+1]))
-            if np.amin(energies) > 0.01:
+                energies.append(float(data[i][1:-1].split()[int(N/2)+j]))
+                #energies.append(float(data[i][1:-1].split()[int(N/2)+1]))
+            if np.amin(energies) > 0.5:
                 continue
-            plt.plot(np.linspace(3,5,len(data)),energies)
-            #plt.yscale("log")
+            plt.plot(np.linspace(3.5,4.5,len(data)),energies)
+            plt.yscale("log")
             #energies = np.array([float(s) for s in data[i][1:-1].split()])[int(N/2):]
             #every[i][j:j+500] = energies
         j+=500
 
 energyPlots()
-č
+l
 def energyAndExcitations(file):
     cmap = plt.get_cmap("binary")
     with open("./energijeDoMaloVecW/" + file, "r") as f:

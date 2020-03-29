@@ -1,4 +1,6 @@
-
+"""
+To run on cluster. Excitations during the time evolution.
+"""
 import numpy as np
 import scipy.linalg as lin
 import sys

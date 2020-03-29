@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 25 14:32:48 2020
-
-@author: Admin
+Everything regarding excitations during quenching past the phase transition point
 """
+
 import matplotlib.pyplot as plt
 import os
 import numpy as np
@@ -188,8 +187,7 @@ def EexcMax(times):
 #    contourExcByEnergy([3+0.1*i for i in range(1,21)], times)
 #plt.legend()
 
-     
-    
+#8166247 2525443
 def singleState(stanje):
     N=1000
     path = "../poStanjih/"
@@ -207,19 +205,78 @@ def singleState(stanje):
     y = np.array(energies).flatten()
     Wji = [3+0.1*i for i in range(1,21)]
     x = np.repeat(Wji,int(N/2))
-    cmap = plt.get_cmap("viridis")
-    maks=np.amax(z)
-    for i in range(len(x)):
-        plt.plot(x[i],y[i],"ok",alpha=z[i]/maks)
+    cmap = plt.get_cmap("jet")
+    plt.yscale("log")
+    #plt.scatter(x,y,c=z,cmap=cmap,s=z*30)
+    plt.xlabel(r"$W$")
+    plt.ylabel(r"$E$")
+    plt.title("Seed: 8166247, Stanje z {}. najvišjo negativno energijo".format(stanje))
+    for i in range(len(z)):
+        if np.abs(z[i]) > 0.1:
+            plt.scatter([x[i]],[y[i]],c=[z[i]],cmap=cmap,s=[z[i]*30])
+            plt.text(x[i],y[i],str(i%(int(N/2))+1))
+    plt.colorbar()
+    #plt.savefig("{}.pdf".format(stanje))
+    #plt.clf()
 #    cnt = plt.tricontourf(x,y,z,levels=np.linspace(np.amin(z),np.amax(z),50))
-#    for c in cnt.collections: #remove ugly  white lines
+#    for c in cnt.collections: #remove ugly  white linesle
 #        c.set_edgecolor("face")
 #    plt.colorbar(cnt)    
-    plt.yscale("log")
 
-        
 singleState(1)
+
+def singleStateValence(stanje):
+    N=1000
+    path = "../poStanjih/"
+    pattern = re.compile(r"\[[^[]*\]")
+    with open(path + "energije/8166247.txt","r") as f:
+        energies = re.findall(pattern,f.read())
+    with open(path + "eksitacije/{}/8166247.txt".format(str(stanje)),"r") as f:
+        transitions = re.findall(pattern,f.read())
     
+    energiesCond = [list(map(float,e[1:-1].split()))[int(N/2):] for e in energies]
+    transitionsCond = [list(map(float,e[1:-1].split(",")))[int(N/2):] for e in transitions]
+    transitionsCond = np.array(transitionsCond)
+    transitionsVal = [list(map(float,e[1:-1].split(",")))[:int(N/2)][::-1] for e in transitions]
+    transitionsVal = np.array(transitionsVal)
+    z = transitionsCond.flatten()
+    y = np.array(energiesCond).flatten()
+    Wji = [3+0.1*i for i in range(1,21)]
+    x = np.repeat(Wji,int(N/2))
+    cmap = plt.get_cmap("jet")
+    fig, [ax1, ax2] = plt.subplots(2,figsize=(12,12))
+    ax1.set_yscale("log")
+    ax2.set_yscale("log")
+
+    plot = ax1.scatter(x,y,c=z,cmap=cmap,s=z*30)
+    plt.colorbar(plot, ax=ax1)
+    #ax1.set_xlabel(r"$W$")
+    ax1.set_ylabel(r"$E$")
+    ax1.set_title("Seed: 8166247, Stanje z {}. najvišjo negativno energijo, prevodni pas".format(stanje))
+    for i in range(len(z)):
+        if np.abs(z[i]) > 0.1:
+            ax1.text(x[i],y[i],str(i%(int(N/2))+1))
+
+    z = transitionsVal.flatten()
+    plot = ax2.scatter(x,y,c=z,cmap=cmap,s=z*30)
+    plt.colorbar(plot, ax=ax2)
+    ax2.set_xlabel(r"$W$")
+    ax2.set_ylabel(r"$-E$")
+    ax2.set_title("Seed: 8166247, Stanje z {}. najvišjo negativno energijo, valenčni pas".format(stanje))
+    for i in range(len(z)):
+        if np.abs(z[i]) > 0.1:
+            ax2.text(x[i],y[i],str(i%(int(N/2))+1))
+    plt.tight_layout()
+    plt.savefig("{}.pdf".format(stanje))
+    plt.clf()
+#    cnt = plt.tricontourf(x,y,z,levels=np.linspace(np.amin(z),np.amax(z),50))
+#    for c in cnt.collections: #remove ugly  white linesle
+#        c.set_edgecolor("face")
+#    plt.colorbar(cnt) 
+
+for i in range(1,11):
+    break
+    singleStateValence(i)
         
         
         

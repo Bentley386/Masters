@@ -1,4 +1,6 @@
-
+"""
+To run on cluster. Excitations for different speeds of quenching.
+"""
 import numpy as np
 import scipy.linalg as lin
 import sys

@@ -1,4 +1,6 @@
-
+"""
+To run on cluster. Energies during quench.
+"""
 import numpy as np
 import scipy.linalg as lin
 import sys

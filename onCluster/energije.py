@@ -1,9 +1,12 @@
-
+"""
+To run on cluster. Energies during quench.
+"""
 import numpy as np
 import scipy.linalg as lin
 import sys
 import mpmath as mp 
 import scipy.sparse as sparse
+import matplotlib.pyplot as plt
 
 mp.mp.dps = 20
 #factor = 1e100
@@ -58,9 +61,10 @@ def timeEvolutionMatrix(N,tau,vs,ws):
     
 
 
-seed = int(sys.argv[1])
+#seed = int(sys.argv[1])
+seed = 8166247
 np.random.seed(seed)
-N=2000
+N=1000
 omega1 = np.random.rand(N)-0.5
 omega2 = np.random.rand(N)-0.5
 Winitial = 3
@@ -72,5 +76,13 @@ for W in Ws:
     ws = np.ones(N)+0.5*W*omega1
     energies = constructHPBC(N,vs,ws,np.zeros(N))[0]
     res.append(energies)
-with open("rezultati/{}.txt".format(seed),"w") as f:
-    f.write(" ".join(list(map(str,res))))
+
+#SAVE FILE    
+#with open("rezultati/{}.txt".format(seed),"w") as f:
+#    f.write(" ".join(list(map(str,res))))
+
+
+res = np.array(res)
+for i in range(10):
+    plt.plot(Ws,res[:,int(N/2)+i])
+plt.yscale("log")

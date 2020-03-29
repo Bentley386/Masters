@@ -1,3 +1,6 @@
+"""
+Display Number of excitations for different quench times.
+"""
 import matplotlib.pyplot as plt
 import os
 import numpy as np

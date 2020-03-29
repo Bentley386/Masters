@@ -1,3 +1,6 @@
+"""
+An extra mini project of investigating lowest 20 positive energy eigenfunctions
+"""
 from matplotlib import animation
 import numpy as np
 import scipy.linalg as lin
