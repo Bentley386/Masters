@@ -8,6 +8,8 @@ import os
 import numpy as np
 import re
 from scipy.optimize import curve_fit
+from matplotlib.animation import FuncAnimation
+
 
 files = [i for i in os.listdir("../EksitacijeSproti")]
 
@@ -63,6 +65,9 @@ def excitationsDuringQuench(Ws,times):
 def model(x,A,e1,e2):
     return A/x**e1/ np.log(x)**e2    
 
+def model2(x,A,B):
+    return A*x**B
+
 def linRegress(T,N):
     A = np.ones((len(T),3))
     A[:,1] = -np.log(T)
@@ -94,8 +99,8 @@ def exponentForFinal(times,divide=1,fit=False):
         
         
 def contourExcByEnergy(Ws,time):
-    #partition=26
-    partition = 1000
+    #partition=50
+    partition = 50
     energyRange = 10**np.linspace(-13,0,partition)
     excitations = np.zeros((partition,len(Ws)))
     number = np.zeros((partition,len(Ws)))
@@ -119,18 +124,31 @@ def contourExcByEnergy(Ws,time):
             if number[where][w] > 0:
                 excitations[where][w] /= number[where][w]
                 
-    #plt.xlabel(r"$W$")
-    #plt.ylabel(r"$E$")
-    #plt.yscale("log")
-    plt.plot(energyRange,excitations[:,-1],label=str(time))
+    plt.xlabel(r"$W$")
+    plt.ylabel(r"$E$")
+    plt.title(r"Eksitacije na interval energije, 50 binov. $v=0.0001$")
+    plt.yscale("log")
+    #plt.plot(energyRange,excitations[:,-1],label=str(time))
     #plt.pcolormesh(excitations,vmax=0.6)
-    #plt.contourf(Ws,energyRange,excitations,levels=np.linspace(np.amin(excitations),np.amax(excitations),50))
-    #plt.colorbar()
+    cnt = plt.contourf(Ws,energyRange,excitations,levels=np.linspace(np.amin(excitations),np.amax(excitations),50),cmap="plasma")
+    for c in cnt.collections: #remove ugly  white lines
+        c.set_edgecolor("face")
+    plt.colorbar()
+    plt.tight_layout()
 
-def EexcMax(times):
+#contourExcByEnergy([3+0.1*i for i in range(1,21)],20000)
+#plt.savefig("Figures/EksBini4.pdf")
+
+def EexcMaxCusBins(times,findBins=False,bins=[]):
     emax = []
-    partition=1000
-    energyRange = 10**np.linspace(-13,0,partition)
+    if findBins:
+        partition=200
+        energyRange = 10**np.linspace(-13,0,partition)
+    else:
+        partition = len(bins)
+        energyRange = bins
+    
+    ForBin=[]
     for time in times:
         excitations = np.zeros(partition)
         number = np.zeros(partition)
@@ -138,13 +156,16 @@ def EexcMax(times):
         allEnergies = getEnergies(time)
         for i in range(len(allEnergies)):
             for j in range(500):
-                energy = allEnergies[i][10][j]
+                energy = allEnergies[i][-1][j]
                 if energy >= 1:
+                    continue
+                if findBins:
+                    ForBin.append(energy)
                     continue
                 where = 0
                 while where<partition:
                     if energy < energyRange[where]:
-                        excitations[where] += allExcitations[i][10][j]
+                        excitations[where] += allExcitations[i][-1][j]
                         number[where] += 1
                         break
                     where += 1
@@ -152,14 +173,71 @@ def EexcMax(times):
             if number[-i] > 0:
                 excitations[-i] /= number[-i]
                 if excitations[-i] >= 0.25:
-                    print(energyRange[-i])
                     emax.append(energyRange[-i])
                     break
-    plt.plot(times,emax)
+        else:
+            print("else")
+            emax.append(energyRange[0])
+    if findBins:
+        return np.histogram_bin_edges(ForBin,"stone")
+    
+    plt.plot(2/np.array(times),emax,":",marker=".")
     plt.yscale("log")
     plt.xscale("log")
+    plt.xlabel(r"$v$")
+    plt.ylabel(r"$E_{max}$")
+    plt.title(r"Energije pri katerih padejo eksitacije na $0.25$")
+    plt.grid()
+#    
+def EexcMax(times):
+    emax = []
+    partition=500
+    energyRange = np.linspace(1e-13,1,partition)
+    for time in times:
+        excitations = np.zeros(partition)
+        number = np.zeros(partition)
+        allExcitations = getExcitations(time)
+        allEnergies = getEnergies(time)
+        for i in range(len(allEnergies)):
+            for j in range(500):
+                energy = allEnergies[i][-1][j]
+                if energy >= 1:
+                    continue
+                where = 0
+                while where<partition:
+                    if energy < energyRange[where]:
+                        excitations[where] += allExcitations[i][-1][j]
+                        number[where] += 1
+                        break
+                    where += 1
+        for i in range(1,partition+1):
+            if number[-i] > 0:
+                excitations[-i] /= number[-i]
+                if excitations[-i] >= 0.25:
+                    emax.append(energyRange[-i])
+                    break
     
-#EexcMax([200,600,2000,6000,20000,60000,200000])
+    x = 2/np.array(times)
+    y = emax
+    A,B = curve_fit(model2,x,y)[0]
+    xx = np.linspace(x[0],x[-1],100)
+    plt.plot(xx,[model2(i,A,B) for i in xx],"--",color="k")
+    plt.text(x[-1],y[0],r"$E \propto v^{%.3f}$" % (B))
+    plt.plot(x,y,"r.")
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.xlabel(r"$v$")
+    plt.ylabel(r"$E_{max}$")
+    plt.title(r"Energije pri katerih padejo eksitacije na $0.25, W: 3 \to 5$")
+    plt.grid()    
+
+#bins = EexcMaxCusBins([600,2000,6000,20000,60000,200000],True)
+#bins = np.sort(np.concatenate((10**np.linspace(-4,-3,300)
+#,bins)))
+#print("hm")
+#EexcMaxCusBins([600,2000,6000,20000,60000,200000],bins=bins)
+#EexcMax([600,2000,6000,20000,60000,200000])
+#plt.savefig("Figures/Emax.pdf")
 #EexcMax([400,900,4000,9000,40000])
        
 
@@ -181,7 +259,6 @@ def EexcMax(times):
         
  
 #contourExcByEnergy([3.5+0.1*i for i in range(1,11)],10000)
-#contourExcByEnergy([3+0.1*i for i in range(1,21)],2000)
     
 #for times in [200,600,2000,6000,20000]:
 #    contourExcByEnergy([3+0.1*i for i in range(1,21)], times)
@@ -210,10 +287,10 @@ def singleState(stanje):
     #plt.scatter(x,y,c=z,cmap=cmap,s=z*30)
     plt.xlabel(r"$W$")
     plt.ylabel(r"$E$")
-    plt.title("Seed: 8166247, Stanje z {}. najvišjo negativno energijo".format(stanje))
+    plt.title("Prehodi iz quenchanega stanja z najvišjo negativno energijo, prevodni pas".format(stanje))
     for i in range(len(z)):
         if np.abs(z[i]) > 0.1:
-            plt.scatter([x[i]],[y[i]],c=[z[i]],cmap=cmap,s=[z[i]*30])
+            plt.scatter([x[i]],[y[i]],c=[z[i]],cmap=cmap,s=[z[i]*30],zorder=10000)
             plt.text(x[i],y[i],str(i%(int(N/2))+1))
     plt.colorbar()
     #plt.savefig("{}.pdf".format(stanje))
@@ -223,7 +300,7 @@ def singleState(stanje):
 #        c.set_edgecolor("face")
 #    plt.colorbar(cnt)    
 
-singleState(1)
+#singleState(1)
 
 def singleStateValence(stanje):
     N=1000
@@ -252,36 +329,73 @@ def singleStateValence(stanje):
     plt.colorbar(plot, ax=ax1)
     #ax1.set_xlabel(r"$W$")
     ax1.set_ylabel(r"$E$")
-    ax1.set_title("Seed: 8166247, Stanje z {}. najvišjo negativno energijo, prevodni pas".format(stanje))
+    ax1.set_title("Prehodi iz quenchanega stanja z najvišjo negativno energijo, prevodni pas".format(stanje))
     for i in range(len(z)):
         if np.abs(z[i]) > 0.1:
             ax1.text(x[i],y[i],str(i%(int(N/2))+1))
-
+            
     z = transitionsVal.flatten()
     plot = ax2.scatter(x,y,c=z,cmap=cmap,s=z*30)
     plt.colorbar(plot, ax=ax2)
     ax2.set_xlabel(r"$W$")
     ax2.set_ylabel(r"$-E$")
-    ax2.set_title("Seed: 8166247, Stanje z {}. najvišjo negativno energijo, valenčni pas".format(stanje))
+    ax2.set_title("Prehodi iz quenchanega stanja z najvišjo negativno energijo, valenčni pas".format(stanje))
+    ax2.invert_yaxis()
     for i in range(len(z)):
         if np.abs(z[i]) > 0.1:
             ax2.text(x[i],y[i],str(i%(int(N/2))+1))
     plt.tight_layout()
     plt.savefig("{}.pdf".format(stanje))
     plt.clf()
+    
+#singleStateValence(1)
 #    cnt = plt.tricontourf(x,y,z,levels=np.linspace(np.amin(z),np.amax(z),50))
 #    for c in cnt.collections: #remove ugly  white linesle
 #        c.set_edgecolor("face")
 #    plt.colorbar(cnt) 
 
-for i in range(1,11):
-    break
-    singleStateValence(i)
+#for i in range(1,11):
+#    singleStateValence(i)
+#    break
+#        
+#        
         
         
-        
-        
-        
-        
-        
-        
+    
+def animacija():
+    pattern = re.compile(r"\[[^[]*\]")
+    folderpath = "../Animacija"
+    quenchana = []
+    prvaval = []
+    drugaval = []
+    with open("{}/quenchana.txt".format(folderpath),"r")  as f:
+        data = re.findall(pattern,f.read())
+        for i in data:
+            quenchana.append(list(map(complex,i[1:-1].split())))
+    with open("{}/prvaVal.txt".format(folderpath),"r")  as f:
+        data = re.findall(pattern,f.read())
+        for i in data:
+            prvaval.append(list(map(complex,i[1:-1].split())))        
+    with open("{}/drugaVal.txt".format(folderpath),"r")  as f:
+        data = re.findall(pattern,f.read())
+        for i in data:
+            drugaval.append(list(map(complex,i[1:-1].split()))) 
+            
+    fig, [ax1,ax2,ax3] = plt.subplots(3,sharex=True)
+    x = np.arange(1000)
+    def animiraj(frame):
+        ax1.clear()
+        ax2.clear()
+        ax3.clear()
+        ax1.plot(x,np.abs(quenchana[frame])**2)
+        ax2.plot(x,np.abs(prvaval[frame])**2)
+        ax3.plot(x,np.abs(drugaval[frame])**2)
+        ax1.set_title("Quenchana prva")
+        ax2.set_title("Lastna prva")
+        ax3.set_title("Lastna druga")
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.suptitle("Seed: 8166247, W={}".format(str(3.1+frame*0.01)))
+
+    ani = FuncAnimation(fig,animiraj,range(200),interval=500)
+    ani.save("anim.mp4")
+#animacija()
