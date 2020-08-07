@@ -6,6 +6,12 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import matplotlib.tri as tri
 
+sirinca=434.62277*0.0138
+visinca=320.11156*0.0138
+plt.rc('text', usetex=True)
+plt.rc('font', size=12)
+plt.rc('figure', figsize=(sirinca, visinca))
+
 def constructH(N,v,w):
     """Constructs and finds eigenfunctions of the SSH hamiltonian with N atoms and hoppings v,w"""
     diagonals = np.zeros(N)
@@ -60,16 +66,20 @@ def loc(vs,ws):
 
 def IPRContour(v,w,N,filename):
     """controuf plot of IPR with respect to randomness for many energies"""
-    deltas = [0.1*i for i in range(51)]
+    deltas = [0.1*i for i in range(51)] #SSH
+    #deltas = [0.01*i for i in range(110)] #anderson
     energies = []
     IPRs = []
     epsilons = []
     for delta in deltas:
+        print(delta)
+        #SSH
         W2 = delta
         W1 = 0.5*delta
         ws = 1+W1*(np.random.rand(N)-0.5)
         vs = W2*(np.random.rand(N)-0.5)
         
+        #ANDERSON
         #epsilon = 0.5*delta*(2*np.random.rand(N)-1)
         #vs = 1+delta*(2*np.random.rand(N)-1)
         #ws = 1+delta*(2*np.random.rand(N)-1)
@@ -84,29 +94,27 @@ def IPRContour(v,w,N,filename):
         energies   = energies + energy.tolist()
         epsilons = epsilons + [delta for i in range(len(IPR))]
 
-
-    #Different presentation of results
-#    cmap = plt.get_cmap("viridis")
-#    colors = [cmap(i/1000) for i in IPRs]
-#    fig = plt.gcf()
-#    plt.scatter(energies,epsilons,c=colors,marker='o', s=(72./fig.dpi)**2,vmax=10)
-#    
+#   SSH
     energies = np.array(energies)
     epsilons = np.array(epsilons)
     trian = tri.Triangulation(energies,epsilons)
     triangles = trian.triangles
-    
+#    
     mask = np.zeros(len(triangles))
     for i in range(len(triangles)):
         tr = triangles[i]
         for j in range(3):
+            if epsilons[tr[j]] < 1.79:
+                if abs(energies[tr[j]])<0.166:
+                    mask[i]=1
+                    break
             x0 = energies[tr[j]]
             x1 = energies[tr[(j+1)%3]]
             if x0 < 0 and x1 > 0:
                 y0 = epsilons[tr[j]]
                 y1 = epsilons[tr[(j+1)%3]]
                 t= x1/(x1-x0)
-                if y0*t+(1-t)*y1 < 2.35:
+                if y0*t+(1-t)*y1 < 2.7: #prej 2.35
                     mask[i]=1
                     break
                 
@@ -122,25 +130,24 @@ def IPRContour(v,w,N,filename):
     for c in cnt.collections: #remove ugly  white lines
         c.set_edgecolor("face")
     plt.colorbar(cnt)
-    #plt.ylim(0,0.4)
+    #plt.ylim(0,1)
     plt.xlabel(r"$E$")
     plt.ylabel(r"$W$")
-    plt.title(r"SSH z neredom v sklopitvah, IPR".format(N))
+    #plt.title(r"SSH z neredom v sklopitvah, IPR".format(N))
     plt.savefig(filename)
-    
 #IPRContour(0.5,1,1000,"SSHIPRNered.pdf")
-
+#IPRContour(0,0,1000,"SSHIPR2.pdf")
 def plotWaveFunctions(N):
     """For masters. Wavefunction plots as we get near critical point"""
     x=np.arange(1,N+1)
-    fig, axi = plt.subplots(2,1,sharey=True)
+    fig, axi = plt.subplots(1,2,sharey=True)
     #deltas = [3.8+0.001*i for i in range(201)]
     #deltas = np.linspace(3.8,4.2,10000)
     np.random.seed(8166247)
     rand1 = np.random.rand(N)
     rand2 = np.random.rand(N)
-    delta1=4.2
-    delta2=3.82
+    delta1=3.8
+    delta2=3.97
     for delta in [delta1,delta2]:
         W2 = delta
         W1 = 0.5*delta
@@ -158,27 +165,27 @@ def plotWaveFunctions(N):
         
         if delta==delta1:
             result = constructHPBC(N,vs,ws,np.zeros(N))
-            print(result[0][int(N/2)])
-            axi[0].plot(x,np.abs(result[1][:,int(N/2)])**2,color="blue",label="Najnižja poz. en.")
-            axi[0].plot(x,np.abs(result[1][:,int(N/2)+1])**2,color="orange",label="2. Najnižja poz. en")
-            axi[0].plot(x,np.abs(result[1][:,int(N/2)+2])**2,color="red",label="3. Najnižja poz. en.")
+            #print(result[0][int(N/2)])
+            axi[0].plot(x,np.abs(result[1][:,int(N/2)])**2,color="blue",label="Prvo stanje")
+            axi[0].plot(x,np.abs(result[1][:,int(N/2)+1])**2,color="orange",label="Drugo stanje")
+            axi[0].plot(x,np.abs(result[1][:,int(N/2)+2])**2,color="red",label="Tretje stanje")
             axi[0].set_ylabel(r"$|\Psi|^2$")
             axi[0].set_xlabel(r"$x$")
             axi[0].legend()
-            axi[0].set_title(r"Zunaj kritične točke ($W={}$)".format(delta1))
+            axi[0].set_title(r"$W={}$".format(delta1))
             axi[0].grid()
         if delta==delta2:
             result = constructHPBC(N,vs,ws,np.zeros(N))
-            print(result[0][int(N/2)])
-            axi[1].plot(x,np.abs(result[1][:,int(N/2)])**2,color="blue",label="Najnižja poz. en.")
-            axi[1].plot(x,np.abs(result[1][:,int(N/2)+1])**2,color="orange",label="2. Najnižja poz. en")
-            axi[1].plot(x,np.abs(result[1][:,int(N/2)+2])**2,color="red",label="3. Najnižja poz. en.")
-            axi[1].set_title(r"V kritični točki ($W={}$)".format(delta2))
+            #print(result[0][int(N/2)])
+            axi[1].plot(x,np.abs(result[1][:,int(N/2)])**2,color="blue")
+            axi[1].plot(x,np.abs(result[1][:,int(N/2)+1])**2,color="orange")
+            axi[1].plot(x,np.abs(result[1][:,int(N/2)+2])**2,color="red")
+            axi[1].set_title(r"$W=4$")
             axi[1].set_xlabel(r"$x$")
             axi[1].grid()
     plt.tight_layout()
-    plt.savefig("TestPloti6.pdf")
-#plotWaveFunctions(1000)
+    plt.savefig("EigenPloti.pdf")
+plotWaveFunctions(1000)
 
 def DOSHist(N,filename):
     W=2.8
@@ -207,7 +214,7 @@ def DOSHist(N,filename):
     ax.spines['top'].set_visible(False)
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_ticks_position('bottom')
-DOSHist(150000,0)
+#DOSHist(150000,0)
     
     
 

@@ -23,7 +23,11 @@ from scipy.optimize import curve_fit
 
 #cetrtek 13:00
 
-
+#sirinca=434.62277*0.0138
+#visinca=207.79*0.0138
+plt.rc('text', usetex=True)
+plt.rc('font', size=12)
+#plt.rc('figure', figsize=(sirinca, visinca))
 
 N = 1000
 pattern1 = re.compile(r"\[[^[]*\]")
@@ -35,7 +39,7 @@ j=0
 
 def energyPlotsOld():
     for file in ["8166247.txt"]: 
-        f = open("../Missing/" + file).read()
+        f = open("../../Missing/" + file).read()
         data = re.findall(pattern1,f)
         for j in range(int(N/2)):
             energies = []
@@ -50,7 +54,7 @@ def energyPlotsOld():
             #every[i][j:j+500] = energies
         j+=500
 
-#energyPlotsOld()
+energyPlotsOld()
 
 def energyPlots():
     fig = plt.figure(figsize=(12,12))
@@ -63,7 +67,7 @@ def energyPlots():
     axins = zoomed_inset_axes(ax, 10, loc=7) # zoom-factor: 2.5, location: upper-left
     
     for file in ["436409.txt"]: 
-        f = open("../EnergijeDoVecW/" + file).read()
+        f = open("../../EnergijeDoVecW/" + file).read()
         data = re.findall(pattern1,f)
         for j in range(int(N/2)):
             energies = []
@@ -81,7 +85,7 @@ def energyPlots():
     ax.set_yscale("log")
     ax.set_xlabel(r"$W$")
     ax.set_ylabel(r"$E$")
-    ax.set_title("Energijski nivoji skozi prehod med fazama")
+    #ax.set_title("Energijski nivoji skozi prehod med fazama")
     mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5")
     #plt.tight_layout()
     aux = []
@@ -95,10 +99,10 @@ def energyPlots():
         
 def energyAndExcitations(file):
     cmap = plt.get_cmap("binary")
-    with open("../energijeDoMaloVecW/" + file, "r") as f:
+    with open("../../energijeDoMaloVecW/" + file, "r") as f:
         energydata = re.findall(pattern1,f.read())
         
-    with open("../eksByStanje/" + file, "r") as f:  #T=200
+    with open("../../eksByStanje/" + file, "r") as f:  #T=200
         excdata = re.findall(pattern1,f.read())
     x = np.linspace(3,5,len(energydata))
     for j in range(int(N/2)):
@@ -116,15 +120,15 @@ def energyAndExcitations(file):
         plt.scatter(x[::10],energies[::10],c=[cmap(e) for e in excitations][::10],s=[15*e for e in excitations][::10],zorder=10000)
     sizes=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99]
     markers=[mlines.Line2D([],[],ls='None',marker="o",c=cmap(s)) for s in sizes]
-    plt.legend(markers,list(map(str,sizes)),loc="best")
+    plt.legend(markers,list(map(str,sizes)),loc="best",fontsize=14)
     plt.yscale("log") 
-    plt.xlabel(r"$W$")
-    plt.ylabel(r"$E$")
-    plt.title(r"Eksitacije tekom quencha, $v=0.01, W \in [3,5]$")
+    plt.xlabel(r"$W$",fontsize=15)
+    plt.ylabel(r"$E$",fontsize=15)
+    #plt.title(r"Eksitacije tekom quencha, $v=0.01, W \in [3,5]$")
     plt.grid()
 #energyAndExcitations("436409.txt")  
 #energyAndExcitations("10158825.txt") 
-#plt.savefig("Figures/EksTekom2.pdf") 
+#plt.savefig("EksTekom1.pdf") 
 #energyPlots()
 
 def lorentz(x,x0):
@@ -185,7 +189,7 @@ def forMasters():
         y = np.array(dos)
         y/= scipy.integrate.trapz(y,Es)
         dosaxi[i].plot(Es,y,color="blue")
-        if i==2:
+        if i==2 and 1==0:
             Es = 10**np.linspace(-7,-9,100)
             dos = [density(E,aux[i][1]) for E in Es]
             y = np.array(dos)
@@ -207,7 +211,7 @@ def forMasters():
         fig.lines.append(line)
         dosaxi[i].grid(True)
     plt.subplots_adjust(hspace=0.4)
-    plt.savefig("Figures/Nicegraph.pdf")
+    plt.savefig("Nicegraph.pdf")
 #forMasters()
 
 def enCount():

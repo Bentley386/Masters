@@ -13,6 +13,12 @@ def periodic_corr(x,y):
     rez = ifft(fft(x)*fft(y).conj()).real
     return rez/rez[0]
 
+#sirinca=434.62277*0.0138
+#visinca=426.797*0.0138
+plt.rc('text', usetex=True)
+plt.rc('font', size=10)
+#plt.rc('figure', figsize=(sirinca, visinca))
+
 #files = [i for i in os.listdir("./EksitacijeVecjiSampleRate")]
 #files = [i for i in os.listdir("./EksitacijeSproti")]
 N = 1000
@@ -28,14 +34,15 @@ def getEverything(foldername):
         data = re.findall(pattern1,f.read())
         every = np.zeros((len(data),500))*1j
         for j in range(len(data)):
-            try:
-                t = list(map(complex,data[j][1:-1].split()))
-            except:
-                print(file)
-                f.close()
-                [float(w) for w in data[j][1:-1].split(",")]
-            #every[j] += np.array(t)
-            every[j]+=[t[i]+t[i+1] for i in range(0,1000,2)]
+            t = list(map(complex,data[j][1:-1].split(","))) #excitations during/after
+            #t = list(map(complex,data[j][1:-1].split())) #spageti
+            #print(len(t))
+#            except:
+#                print(file)
+#                f.close()
+#                [float(w) for w in data[j][1:-1].split(",")]
+            every[j] += np.array(t)
+            #every[j]+=[t[i]+t[i+1] for i in range(0,1000,2)]
         everything.append(every)
         f.close()
     return np.array(everything)
@@ -54,7 +61,7 @@ def FinalExcPlotsMasters(ax,hitrost=False):
     eks = {1:(quench3545,[],r"W: $3.5 \rightarrow 4.5$"),2:(quench35,[],r"W: $3 \rightarrow 4$"),3:(quench26,[],r"W: $2 \rightarrow 6$")}
     for key in eks:
         for q in eks[key][0]:
-            everything = getEverything("ExcByEnergy/eksitacije/{}".format(q))
+            everything = getEverything("../ExcByEnergy/eksitacije/{}".format(q))
             everything = np.sum(everything,axis=0)/len(everything)
             eks[key][1].append(sum(everything[-1]))
             
@@ -71,17 +78,21 @@ def FinalExcPlotsMasters(ax,hitrost=False):
             A,B = curve_fit(model,x[3:],y[3:])[0]
             x=np.linspace(x[0],x[-1],1000)
             ax.plot(x,[model(i,A,B) for i in x],"--",color="k",alpha=0.3)
-            ax.text(x[0],model(x[0],A,B),r"$N \propto T^{%.3f}$" % (B))
+            y = model(x[0],A,B)
+            if(B<-0.19 and B > -0.2):
+                ax.text(x[0]+50,y-3,r"$N \propto T^{%.3f}$" % (B),fontsize=15)
+            else:
+                ax.text(x[0],y,r"$N \propto T^{%.3f}$" % (B),fontsize=15)
             print(B)
         
     if hitrost:
-        ax.set_xlabel(r"$v$",fontsize=12)
-        ax.set_title("Število eksitacij po quenchu v odvisnosti od hitrosti le-tega.",fontsize=12)
+        ax.set_xlabel(r"$v$",fontsize=15)
+        #ax.set_title("Število eksitacij po quenchu v odvisnosti od hitrosti le-tega.",fontsize=12)
     else:
-        ax.legend()
-        ax.set_xlabel(r"$T$",fontsize=12)
-        ax.set_title("Število eksitacij po quenchu v odvisnosti od dolžine le-tega.",fontsize=12)
-        ax.set_ylabel(r"$N_{ex}$",fontsize=12)
+        ax.legend(fontsize=14)
+        ax.set_xlabel(r"$T$",fontsize=15)
+        #ax.set_title("Število eksitacij po quenchu v odvisnosti od dolžine le-tega.",fontsize=12)
+        ax.set_ylabel(r"$N_{ex}$",fontsize=15)
         
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -103,31 +114,32 @@ def FinalExcThruTimeMasters(ax,which):
         faktor=0.2024
     hitrosti = [0.1,0.03,0.01,0.003,0.001,0.0003,0.0001]
     for q,barva,hitrost in zip(quench,barve,hitrosti):
-        everything = getEverything("ExcByEnergy/eksitacije/{}".format(q))
+        everything = getEverything("../ExcByEnergy/eksitacije/{}".format(q))
         everything = np.sum(everything,axis=0)/len(everything)
         everything = np.sum(everything,axis=1)
+        #ax.plot(x,everything,label=r"$v={}$".format(hitrost), color=barva)
         ax.plot((x-4)*q**faktor + 4,everything/everything[-1],label=r"$v={}$".format(hitrost),color=barva)
         
     ax.grid()
-    ax.set_xlabel(r"$W$",fontsize=12)
-    ax.set_ylabel(r"$N_{ex}$",fontsize=12)
-    ax.set_title(r"Eksitacije, W: ${} \rightarrow {}$".format(str(x[0]),str(x[-1])),fontsize=12)
+    ax.set_xlabel(r"$\widetilde{W}$",fontsize=15)
+    ax.set_ylabel(r"$\widetilde{N}_{ex}$",fontsize=15)
+    ax.set_title(r"W: ${} \rightarrow {}$".format(str(x[0]),str(x[-1])))
 
 
 #fig,axi = plt.subplots(1,3,figsize=(12,6))
 #FinalExcThruTimeMasters(axi[0],1)
 #FinalExcThruTimeMasters(axi[1],2)
 #FinalExcThruTimeMasters(axi[2],4)
-#axi[1].legend()
+#axi[1].legend(fontsize=14)
 #plt.tight_layout()
-#plt.savefig("Figures/SkoziCasAlt.pdf")
+#plt.savefig("SkoziCasAlt.pdf")
 
 
 #fig, axi = plt.subplots(1,2,sharey=True,figsize=(12,6))
 #FinalExcPlotsMasters(axi[0])
 #FinalExcPlotsMasters(axi[1],True)
 #plt.tight_layout()
-#plt.savefig("Figures/Skaliranje3Alt.pdf")
+#plt.savefig("Skaliranje3Alt.pdf")
 
 def forT2000():
     files = [i for i in os.listdir("./vecEksFiksenT/T2000")]
@@ -175,21 +187,21 @@ def ExcitationForMoreT(x,every):
     plt.savefig("HistogramiLog.pdf")
 
 def ExcitationsDuring():
-    every = getEverything("zaHist")[0] #T=6000 3->5
+    every = getEverything("../zaHist")[0] #T=6000 3->5
     x = np.arange(1,501)
     fig, axi = plt.subplots(2,2,sharex=True,sharey=True,figsize=(10,10))
     axi[0][0].bar(x,every[0])
-    axi[0][0].set_title(r"$W=3.5$",fontsize=12)
-    axi[0][0].set_ylabel(r"$N_{ex}$",fontsize=12)
+    axi[0][0].set_title(r"$W=3.5$")
+    axi[0][0].set_ylabel(r"$N_{ex}$")
     axi[0][1].bar(x,every[1])
-    axi[0][1].set_title(r"$W=4$",fontsize=12)
+    axi[0][1].set_title(r"$W=4$")
     axi[1][0].bar(x,every[2])
-    axi[1][0].set_title(r"$W=4.5$",fontsize=12)
-    axi[1][0].set_ylabel(r"$N_{ex}$",fontsize=12)
-    axi[1][0].set_xlabel(r"$x$",fontsize=12)
+    axi[1][0].set_title(r"$W=4.5$")
+    axi[1][0].set_ylabel(r"$N_{ex}$")
+    axi[1][0].set_xlabel(r"$x$")
     axi[1][1].bar(x,every[3])
-    axi[1][1].set_title(r"$W=5$",fontsize=12)
-    axi[1][1].set_xlabel(r"$x$",fontsize=12)
+    axi[1][1].set_title(r"$W=5$")
+    axi[1][1].set_xlabel(r"$x$")
     for i in range(4):
         print(sum(every[i]))
     #axi[0][0].set_yscale("log")
@@ -197,9 +209,9 @@ def ExcitationsDuring():
     #axi[1][0].set_yscale("log")
     #axi[1][1].set_yscale("log")
     #plt.suptitle(r"Krajevna porazdelitev eksitacij. $v=0.01, W: 3.5 \rightarrow 4.5$")
-    plt.savefig("Figures/KrajevneEksitacijeNoGrid.pdf")
+    plt.savefig("KrajevneEksitacijeNoGrid.pdf")
 
-ExcitationsDuring()
+#ExcitationsDuring()
 
 def ExcitationsAnimation(every):  
     fig, ax = plt.subplots()    

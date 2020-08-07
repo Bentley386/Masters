@@ -16,6 +16,11 @@ mp.mp.dps = 20
 #factor = 1e100
 factor = 1
 
+sirinca=434.62277*0.0138
+visinca=320.11156*0.0138
+plt.rc('text', usetex=True)
+plt.rc('font', size=12)
+plt.rc('figure', figsize=(sirinca, visinca))
 
 def constructHPBC(N,v,w,epsilons):
     """diagonalization"""
@@ -121,7 +126,7 @@ def localization(N,plot,filename):
         Ws = np.linspace(3,5,200)
         plt.grid(True)
         plt.plot(Ws,[lengthFormula(0,W) for W in Ws],label="Formula")
-        for N in [1000,2000,3000]:
+        for N in [1000,2000,3000,500000]:
             result = np.zeros(200)
             for k in range(1):
                 omega1 = np.random.rand(N)-0.5
@@ -134,7 +139,7 @@ def localization(N,plot,filename):
             plt.plot(Ws,result,label=r"$N={}$".format(N))
         plt.xlabel(r"$W$")
         plt.ylabel(r"$\Lambda^{-1}$")
-        plt.title("Primerjava asimptotske formule za lokalizacijsko dolžino s simulacijami")
+        #plt.title("Primerjava asimptotske formule za lokalizacijsko dolžino s simulacijami")
         plt.legend()
         plt.savefig(filename)
             
@@ -246,6 +251,7 @@ def localization(N,plot,filename):
             #plt.legend(loc="best")
             
 #localization(1000,"IPR","Figures/locLength.pdf")
+#localization(1000,"ForMasters","locLength.pdf")
     
 def timeEvolution(N,filename):
     """excitations during time evolution"""
