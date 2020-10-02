@@ -6,8 +6,8 @@ from matplotlib import animation
 from scipy.optimize import curve_fit
 from numpy.fft import fft, ifft
 
-def model(x,A,B):
-    return A*x**B
+def model(x,A,B,C):
+    return A*x**B*np.log(x)**C
 
 def periodic_corr(x,y):
     rez = ifft(fft(x)*fft(y).conj()).real
@@ -58,32 +58,36 @@ def FinalExcPlotsMasters(ax,hitrost=False):
 #    quench26 = [900,4000,9000,40000]
     
     v = {1:1,2:2,3:4}
-    eks = {1:(quench3545,[],r"W: $3.5 \rightarrow 4.5$"),2:(quench35,[],r"W: $3 \rightarrow 4$"),3:(quench26,[],r"W: $2 \rightarrow 6$")}
+    eks = {1:(quench3545,[],r"$W \in [3.5,4.5]$"),2:(quench35,[],r"$W \in [3,5]$"),3:(quench26,[],r"$W \in [2,6]$")}
+    barve = ["blue","orange","green"]
     for key in eks:
         for q in eks[key][0]:
             everything = getEverything("../ExcByEnergy/eksitacije/{}".format(q))
             everything = np.sum(everything,axis=0)/len(everything)
             eks[key][1].append(sum(everything[-1]))
             
+        x = eks[key][0]
+        y = eks[key][1]
+        fit = curve_fit(model,x,y)
+        A,B,C = fit[0]
+        
         if hitrost:
             x = v[key]/np.array(eks[key][0])
-            y = eks[key][1]
-            ax.plot(x,y,ls=":",marker=".",label=eks[key][2])
-
-        else:
-            x = eks[key][0]
-            y = eks[key][1]
-            ax.plot(x,y,ls=":",marker=".",label=eks[key][2])            
             
-            A,B = curve_fit(model,x[3:],y[3:])[0]
-            x=np.linspace(x[0],x[-1],1000)
-            ax.plot(x,[model(i,A,B) for i in x],"--",color="k",alpha=0.3)
-            y = model(x[0],A,B)
-            if(B<-0.19 and B > -0.2):
-                ax.text(x[0]+50,y-3,r"$N \propto T^{%.3f}$" % (B),fontsize=15)
-            else:
-                ax.text(x[0],y,r"$N \propto T^{%.3f}$" % (B),fontsize=15)
-            print(B)
+        ax.plot(x,y,lw=0,marker=".",label=eks[key][2])            
+        x=np.linspace(x[0],x[-1],1000)
+
+        if hitrost:
+            ax.plot(x,[model(i**(-1)*v[key],A,B,C) for i in x],ls=":",color=barve[key-1])
+        else:
+            ax.plot(x,[model(i,A,B,C) for i in x], ls=":", color=barve[key-1])
+            y = model(x[0],A,B,C)
+            if key==1:
+                ax.text(x[0],y-6,r"$N_{eks} \propto T^{%.3f}  (\log T)^{%.3f}$" % (B,C),fontsize=15)
+            elif key==2:
+                ax.text(x[0],y-2,r"$N_{eks} \propto T^{%.3f}  (\log T)^{%.3f}$" % (B,C),fontsize=15)                
+            elif key==3:
+                ax.text(x[0],y,r"$N_{eks} \propto T^{%.3f}  (\log T)^{%.3f}$" % (B,C),fontsize=15)
         
     if hitrost:
         ax.set_xlabel(r"$v$",fontsize=15)
@@ -92,7 +96,7 @@ def FinalExcPlotsMasters(ax,hitrost=False):
         ax.legend(fontsize=14)
         ax.set_xlabel(r"$T$",fontsize=15)
         #ax.set_title("Število eksitacij po quenchu v odvisnosti od dolžine le-tega.",fontsize=12)
-        ax.set_ylabel(r"$N_{ex}$",fontsize=15)
+        ax.set_ylabel(r"$N_{eks}$",fontsize=15)
         
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -103,27 +107,30 @@ def FinalExcThruTimeMasters(ax,which):
     if which==1:
         x = np.linspace(3.5,4.5,10)
         quench = [10,30,100,300,1000,3000,10000]
-        faktor=0.1653
+        f1=0.168
+        f2=0.029
     elif which==2:
         x = np.linspace(3,5,20)
         quench = [20,60,200,600,2000,6000,20000]
-        faktor=0.1945
+        f1=0.141
+        f2=0.454
     elif which==4:
         x = np.linspace(2,6,40)
         quench = [40,90,400,900,4000,9000,40000]
-        faktor=0.2024
+        f1=0.096
+        f2=0.878
     hitrosti = [0.1,0.03,0.01,0.003,0.001,0.0003,0.0001]
     for q,barva,hitrost in zip(quench,barve,hitrosti):
         everything = getEverything("../ExcByEnergy/eksitacije/{}".format(q))
         everything = np.sum(everything,axis=0)/len(everything)
         everything = np.sum(everything,axis=1)
         #ax.plot(x,everything,label=r"$v={}$".format(hitrost), color=barva)
-        ax.plot((x-4)*q**faktor + 4,everything/everything[-1],label=r"$v={}$".format(hitrost),color=barva)
+        ax.plot((x-4)*q**f1*np.log(q)**f2 + 4,everything/everything[-1],label=r"$v={}$".format(hitrost),color=barva)
         
     ax.grid()
-    ax.set_xlabel(r"$\widetilde{W}$",fontsize=15)
-    ax.set_ylabel(r"$\widetilde{N}_{ex}$",fontsize=15)
-    ax.set_title(r"W: ${} \rightarrow {}$".format(str(x[0]),str(x[-1])))
+    ax.set_xlabel(r"$\tilde{W}$",fontsize=15)
+    ax.set_ylabel(r"$\tilde{N}_{eks}$",fontsize=15)
+    ax.set_title(r"$W \in [{},{}]$".format(str(x[0]),str(x[-1])))
 
 
 #fig,axi = plt.subplots(1,3,figsize=(12,6))
@@ -135,11 +142,11 @@ def FinalExcThruTimeMasters(ax,which):
 #plt.savefig("SkoziCasAlt.pdf")
 
 
-#fig, axi = plt.subplots(1,2,sharey=True,figsize=(12,6))
-#FinalExcPlotsMasters(axi[0])
-#FinalExcPlotsMasters(axi[1],True)
-#plt.tight_layout()
-#plt.savefig("Skaliranje3Alt.pdf")
+fig, axi = plt.subplots(1,2,sharey=True,figsize=(12,6))
+FinalExcPlotsMasters(axi[0])
+FinalExcPlotsMasters(axi[1],True)
+plt.tight_layout()
+plt.savefig("Skaliranje3Alt.pdf")
 
 def forT2000():
     files = [i for i in os.listdir("./vecEksFiksenT/T2000")]

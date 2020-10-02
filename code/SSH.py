@@ -66,28 +66,34 @@ def loc(vs,ws):
 
 def IPRContour(v,w,N,filename):
     """controuf plot of IPR with respect to randomness for many energies"""
-    deltas = [0.1*i for i in range(51)] #SSH
-    #deltas = [0.01*i for i in range(110)] #anderson
+    #deltas = [0.1*i for i in range(51)] #SSH
+    deltas = [0.01*i for i in range(110)] #anderson
     energies = []
     IPRs = []
     epsilons = []
+    np.random.seed(100000)
     for delta in deltas:
         print(delta)
         #SSH
-        W2 = delta
-        W1 = 0.5*delta
-        ws = 1+W1*(np.random.rand(N)-0.5)
-        vs = W2*(np.random.rand(N)-0.5)
+        #W2 = delta
+        #W1 = 0.5*delta
+        #ws = 1+W1*(np.random.rand(N)-0.5)
+        #vs = W2*(np.random.rand(N)-0.5)
         
         #ANDERSON
         #epsilon = 0.5*delta*(2*np.random.rand(N)-1)
-        #vs = 1+delta*(2*np.random.rand(N)-1)
-        #ws = 1+delta*(2*np.random.rand(N)-1)
+        vs = 1+delta*(2*np.random.rand(N)-1)
+        ws = 1+delta*(2*np.random.rand(N)-1)
         
         #vs = 0.5+delta*(2*np.random.rand(N)-1)
         #ws = 1+0.5*delta*(2*np.random.rand(N)-1)
-        
         result = constructHPBC(N,vs,ws,np.zeros(N))
+        if delta==0.03 and 1==0:
+            aa = N-1
+            print(result[0][aa])
+            print(1/np.sum(np.abs(result[1][:,aa])**4))
+            plt.plot(np.arange(1000),np.abs(result[1][:,aa])**2)
+            č
         energy, indices = np.unique(result[0],return_index=True)
         IPR = [1/np.sum(np.abs(result[1][:,i])**4) for i in range(N) if i in indices]
         IPRs = IPRs + IPR #conatenation
@@ -99,38 +105,46 @@ def IPRContour(v,w,N,filename):
     epsilons = np.array(epsilons)
     trian = tri.Triangulation(energies,epsilons)
     triangles = trian.triangles
-#    
-    mask = np.zeros(len(triangles))
-    for i in range(len(triangles)):
-        tr = triangles[i]
-        for j in range(3):
-            if epsilons[tr[j]] < 1.79:
-                if abs(energies[tr[j]])<0.166:
-                    mask[i]=1
-                    break
-            x0 = energies[tr[j]]
-            x1 = energies[tr[(j+1)%3]]
-            if x0 < 0 and x1 > 0:
-                y0 = epsilons[tr[j]]
-                y1 = epsilons[tr[(j+1)%3]]
-                t= x1/(x1-x0)
-                if y0*t+(1-t)*y1 < 2.7: #prej 2.35
-                    mask[i]=1
-                    break
+  
+#    mask = np.zeros(len(triangles))
+#    for i in range(len(triangles)):
+#        tr = triangles[i]
+#        for j in range(3):
+#            if abs(abs(energies[tr[j]])-2)<1e7 and epsilons[tr[j]]<1e3:
+#                if (epsilons[tr[(j+1)%3]])
+#                mask[i]=1
+#                break
+#            if epsilons[tr[j]] < 1.79:
+#                if abs(energies[tr[j]])<0.166:
+#                    mask[i]=1
+#                    break
+#            x0 = energies[tr[j]]
+#            x1 = energies[tr[(j+1)%3]]
+#            if x0 < 0 and x1 > 0:
+#                y0 = epsilons[tr[j]]
+#                y1 = epsilons[tr[(j+1)%3]]
+#                t= x1/(x1-x0)
+#                if y0*t+(1-t)*y1 < 2.7: #prej 2.35
+#                    mask[i]=1
+#                    break
                 
-#    xtri = energies[triangles] - np.roll(energies[triangles], 1, axis=1)
-#    ytri = epsilons[triangles] - np.roll(epsilons[triangles], 1, axis=1)
-#    maxi = np.max(np.sqrt(xtri**2 + ytri**2), axis=1)
-#    trian.set_mask(maxi > 0.5)
-    trian.set_mask(mask)
+    xtri = energies[triangles] - np.roll(energies[triangles], 1, axis=1)
+    ytri = epsilons[triangles] - np.roll(epsilons[triangles], 1, axis=1)
+##    trian.set_mask(np.abs(np.abs(xtri)-2)<1e8 and ytri<0.01)
+    maxi = np.max(np.sqrt(xtri**2 + ytri**2), axis=1)
+    trian.set_mask(maxi > 0.2)
+    #trian.set_mask(mask)
     #plt.triplot(trian)
-    cnt = plt.tricontourf(trian,IPRs,levels=np.linspace(np.amin(IPRs),np.amax(IPRs),50))
-    #cnt = plt.tricontourf(energies,epsilons,IPRs,levels=np.linspace(np.amin(IPRs),np.amax(IPRs),50))
+    #plt.scatter(energies,epsilons,c=[i/1000 for i in IPRs],s=15,cmap="viridis")
+    cnt = plt.tricontourf(trian,IPRs,levels=np.linspace(0,1000,50))
+    #cnt = plt.tricontourf(energies,epsilons,IPRs,levels=np.linspace(0,1000,50),antialiased=False)
 #
     for c in cnt.collections: #remove ugly  white lines
         c.set_edgecolor("face")
-    plt.colorbar(cnt)
-    #plt.ylim(0,1)
+    cb = plt.colorbar(cnt)
+    cb.set_ticks([i*100 for i in range(11)])
+    cb.set_ticklabels([i*100 for i in range(11)])
+    plt.ylim(0,1)
     plt.xlabel(r"$E$")
     plt.ylabel(r"$W$")
     #plt.title(r"SSH z neredom v sklopitvah, IPR".format(N))
@@ -185,7 +199,7 @@ def plotWaveFunctions(N):
             axi[1].grid()
     plt.tight_layout()
     plt.savefig("EigenPloti.pdf")
-plotWaveFunctions(1000)
+#plotWaveFunctions(1000)
 
 def DOSHist(N,filename):
     W=2.8

@@ -125,7 +125,6 @@ def localization(N,plot,filename):
         m=0
         Ws = np.linspace(3,5,200)
         plt.grid(True)
-        plt.plot(Ws,[lengthFormula(0,W) for W in Ws],label="Formula")
         for N in [1000,2000,3000,500000]:
             result = np.zeros(200)
             for k in range(1):
@@ -137,6 +136,7 @@ def localization(N,plot,filename):
                     ws = np.ones(N)+0.5*W*omega1
                     result[i] += lengthEmpiric(vs,ws)
             plt.plot(Ws,result,label=r"$N={}$".format(N))
+        plt.plot(Ws,[lengthFormula(0,W) for W in Ws],"--",label="Formula")
         plt.xlabel(r"$W$")
         plt.ylabel(r"$\Lambda^{-1}$")
         #plt.title("Primerjava asimptotske formule za lokalizacijsko dolžino s simulacijami")
@@ -251,7 +251,7 @@ def localization(N,plot,filename):
             #plt.legend(loc="best")
             
 #localization(1000,"IPR","Figures/locLength.pdf")
-#localization(1000,"ForMasters","locLength.pdf")
+#localization(1000,"ForMasters","locLength4.pdf")
     
 def timeEvolution(N,filename):
     """excitations during time evolution"""

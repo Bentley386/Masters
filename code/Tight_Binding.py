@@ -43,7 +43,7 @@ def IPRContour(gamma,N,filename):
     #plt.savefig(filename)
     
     
-IPRContour(1,1000,"lol")
+#IPRContour(1,1000,"lol")
 
 def densityOfStates(gamma,N,filename,plot="both"):
     """Calculates the density of states"""

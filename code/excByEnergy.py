@@ -104,9 +104,10 @@ def exponentForFinal(times,divide=1,fit=False):
         
         
 def contourExcByEnergy(Ws,time):
-    #partition=50
-    partition = 20
-    energyRange = 10**np.linspace(-13,-4,partition)
+    partition=50
+    #partition = 20
+    energyRange = 10**np.linspace(-13,0,partition)
+    #energyRange = np.linspace(1e-13,1e-4,partition)
     excitations = np.zeros((partition,len(Ws)))
     number = np.zeros((partition,len(Ws)))
     allExcitations = getExcitations(time)
@@ -132,16 +133,17 @@ def contourExcByEnergy(Ws,time):
     plt.xlabel(r"$W$",fontsize=15)
     plt.ylabel(r"$E$",fontsize=15)
     #plt.title(r"Eksitacije na interval energije, 50 binov. $v=0.0001$")
-    #plt.yscale("log")
+    plt.yscale("log")
     #plt.plot(energyRange,excitations[:,-1],label=str(time))
     #plt.pcolormesh(excitations,vmax=0.6)
-    cnt = plt.contourf(Ws,energyRange,excitations,levels=np.linspace(np.amin(excitations),np.amax(excitations),50),cmap="plasma")
+    plt.pcolor(excitations)
+    #cnt = plt.contourf(Ws,energyRange,excitations,levels=np.linspace(np.amin(excitations),np.amax(excitations),50),cmap="plasma")
     for c in cnt.collections: #remove ugly  white lines
         c.set_edgecolor("face")
     plt.colorbar()
     plt.tight_layout()
 
-#contourExcByEnergy([3+0.1*i for i in range(1,21)],2000)
+#contourExcByEnergy([3+0.1*i for i in range(1,21)],20000)
 #plt.savefig("EksBini1.pdf")
 
 def EexcMaxCusBins(times,findBins=False,bins=[]):
@@ -225,27 +227,28 @@ def EexcMax(times,partition,color,marker,indeks):
     y = emax
     A,B = curve_fit(model2,x,y)[0]
     xx = np.linspace(x[0],x[-1],100)
-    plt.plot(xx,[model2(i,A,B) for i in xx],"--",color=color)
+    plt.plot(xx,[model2(i,A,B) for i in xx],"--",color=color,label=r"$E_{max} \propto v^{%.3f}$" % (B))
     #plt.text(x[1+i],y[1+i],r"$E \propto v^{%.3f}$" % (B))
-    plt.plot(x,y,color=color,marker=marker,lw=0,label=f"Particija: {partition}, " + r"$E \propto v^{%.3f}$" % (B))
+    plt.plot(x,y,color="k",marker=marker,lw=0)
     plt.yscale("log")
     plt.xscale("log")
     plt.xlabel(r"$v$")
     plt.ylabel(r"$E_{max}$")
     #plt.title(r"Energije pri katerih padejo eksitacije na $0.25, W: 3 \to 5$")
-    plt.grid()    
+    #plt.grid()    
 
 #bins = EexcMaxCusBins([600,2000,6000,20000,60000,200000],True)
 #bins = np.sort(np.concatenate((10**np.linspace(-4,-3,300)
 #,bins)))
 #print("hm")
 #EexcMaxCusBins([600,2000,6000,20000,60000,200000],bins=bins)
-#colors=["r","c","g","m"]
-#markers=["x"]*4
-#for i in range(4):
-#    EexcMax([600,2000,6000,20000,60000,200000],200+i*100,colors[i],markers[i],i)
-#plt.legend(loc="best")
-#plt.savefig("Emax.pdf")
+colors=["r","c","g","m"]
+markers=["x"]*4
+for i in range(1):
+    EexcMax([600,2000,6000,20000,60000,200000],300+i*100,colors[i],markers[i],i)
+    break
+plt.legend(loc="best")
+plt.savefig("Emax.pdf")
 #EexcMax([400,900,4000,9000,40000])
        
 
@@ -311,7 +314,7 @@ def singleState(stanje):
 #        c.set_edgecolor("face")
 #    plt.colorbar(cnt)    
 
-singleState(1)
+#singleState(1)
 
 def singleStateValence(stanje):
     N=1000

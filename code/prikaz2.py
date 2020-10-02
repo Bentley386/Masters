@@ -54,16 +54,16 @@ def energyPlotsOld():
             #every[i][j:j+500] = energies
         j+=500
 
-energyPlotsOld()
+#energyPlotsOld()
 
 def energyPlots():
     fig = plt.figure(figsize=(12,12))
-    gs= gridspec.GridSpec(ncols=3, nrows=3, figure=fig)    
+    gs= gridspec.GridSpec(ncols=3, nrows=2, figure=fig)    
     ax = fig.add_subplot(gs[:2, :])
     ax2 = ax.twinx()
-    ax3 = fig.add_subplot(gs[2, 0])
-    ax4 = fig.add_subplot(gs[2, 1])
-    ax5 = fig.add_subplot(gs[2, 2])
+    #ax3 = fig.add_subplot(gs[2, 0])
+    #ax4 = fig.add_subplot(gs[2, 1])
+    #ax5 = fig.add_subplot(gs[2, 2])
     axins = zoomed_inset_axes(ax, 10, loc=7) # zoom-factor: 2.5, location: upper-left
     
     for file in ["436409.txt"]: 
@@ -95,7 +95,8 @@ def energyPlots():
             #energies = np.array([float(s) for s in data[i][1:-1].split()])[int(N/2):]
             #every[i][j:j+500] = energies
         #j+=500
-    return [fig, ax, ax2, ax3, ax4, ax5,aux]
+    return [fig,ax,ax2,None,None,None,aux]
+    return [fig, ax, ax2, ax3, ax4, ax5, aux]
         
 def energyAndExcitations(file):
     cmap = plt.get_cmap("binary")
@@ -180,38 +181,38 @@ def forMasters():
     ax2.plot(np.linspace(2,6,800),length,ls="--",alpha=0.5,color="k")
     ax2.set_ylabel(r"$\Lambda$",rotation=270)
 
-    ax3.set_ylabel(r"$g$")    
-    color = plt.get_cmap("copper")(0.5)
-    for i in range(3):
-        dosaxi[i].set_xlabel(r"$E$")
-        Es = np.linspace(10**(-15),3,1000)
-        dos = [density(E,aux[i][1]) for E in Es]
-        y = np.array(dos)
-        y/= scipy.integrate.trapz(y,Es)
-        dosaxi[i].plot(Es,y,color="blue")
-        if i==2 and 1==0:
-            Es = 10**np.linspace(-7,-9,100)
-            dos = [density(E,aux[i][1]) for E in Es]
-            y = np.array(dos)
-            A,B,C = curve_fit(dosmodel,Es,y)
-            print(A,B,C)
-            plt.clf()
-            plt.xscale("log")
-            plt.yscale("log")
-            plt.plot(Es,y)
-            č
-        
-        dosaxi[i].plot(-Es,y,color="blue")
-        
-        ax.axvline(x=aux[i][0][0],color=color,ls=":")
-        transFigure = fig.transFigure.inverted()
-        coord1 = transFigure.transform(dosaxi[i].transData.transform([0,dosaxi[i].get_ylim()[1]-dosaxi[i].get_ylim()[1]/8]))
-        coord2 = transFigure.transform(ax.transData.transform([aux[i][0][0],10**(-12)]))
-        line = matplotlib.lines.Line2D((coord1[0],coord2[0]),(coord1[1],coord2[1]),transform=fig.transFigure,color=color)
-        fig.lines.append(line)
-        dosaxi[i].grid(True)
+#    ax3.set_ylabel(r"$g$")    
+#    color = plt.get_cmap("copper")(0.5)
+#    for i in range(3):
+#        dosaxi[i].set_xlabel(r"$E$")
+#        Es = np.linspace(10**(-15),3,1000)
+#        dos = [density(E,aux[i][1]) for E in Es]
+#        y = np.array(dos)
+#        y/= scipy.integrate.trapz(y,Es)
+#        dosaxi[i].plot(Es,y,color="blue")
+#        if i==2 and 1==0:
+#            Es = 10**np.linspace(-7,-9,100)
+#            dos = [density(E,aux[i][1]) for E in Es]
+#            y = np.array(dos)
+#            A,B,C = curve_fit(dosmodel,Es,y)
+#            print(A,B,C)
+#            plt.clf()
+#            plt.xscale("log")
+#            plt.yscale("log")
+#            plt.plot(Es,y)
+#            č
+#        
+#        dosaxi[i].plot(-Es,y,color="blue")
+#        
+#        ax.axvline(x=aux[i][0][0],color=color,ls=":")
+#        transFigure = fig.transFigure.inverted()
+#        coord1 = transFigure.transform(dosaxi[i].transData.transform([0,dosaxi[i].get_ylim()[1]-dosaxi[i].get_ylim()[1]/8]))
+#        coord2 = transFigure.transform(ax.transData.transform([aux[i][0][0],10**(-12)]))
+#        line = matplotlib.lines.Line2D((coord1[0],coord2[0]),(coord1[1],coord2[1]),transform=fig.transFigure,color=color)
+#        fig.lines.append(line)
+#        dosaxi[i].grid(True)
     plt.subplots_adjust(hspace=0.4)
-    plt.savefig("Nicegraph.pdf")
+    plt.savefig("Nicegraph2.pdf")
 #forMasters()
 
 def enCount():
